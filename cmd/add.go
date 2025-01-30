@@ -1,9 +1,14 @@
 package cmd
 
 import (
-	"fercslv/task-cli/struts"
+	"encoding/json"
+	"fercslv/task-cli/structs"
+
 	"fmt"
 	"github.com/spf13/cobra"
+	"io/ioutil"
+	"os"
+	"time"
 )
 
 func init() {
@@ -17,9 +22,26 @@ var addCommand = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		taskName := args[0]
 
-		task := struts.Task{
-			Name: taskName,
+		tasks, _ := ioutil.ReadFile("tasks.json")
+		var data []structs.Task
+		json.Unmarshal(tasks, &data)
+		lastItem := len(data) - 1
+		id := 1
+		if lastItem > -1 {
+			id = data[lastItem].Id + 1
 		}
-		fmt.Println("Adding task: " + taskName)
+
+		task := structs.Task{
+			Id:        id,
+			Name:      taskName,
+			Status:    "todo",
+			CreatedAt: time.Now().UnixMicro(),
+			UpdatedAt: time.Now().UnixMicro(),
+		}
+
+		data = append(data, task)
+		jsonData, _ := json.Marshal(data)
+		ioutil.WriteFile("tasks.json", jsonData, os.ModePerm)
+		fmt.Printf("Task added successfully (%v)\n", task.Id)
 	},
 }
